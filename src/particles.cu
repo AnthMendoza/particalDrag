@@ -10,9 +10,9 @@ __global__ void updateState(particles *particle , size_t size , float timeStep){
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if(index<size){
-        particle[index].positionX +- particle[index].velocityX * timeStep;
-        particle[index].positionY +- particle[index].velocityY * timeStep;
-        particle[index].positionZ +- particle[index].velocityZ * timeStep;
+        particle[index].positionX += particle[index].velocityX * timeStep;
+        particle[index].positionY += particle[index].velocityY * timeStep;
+        particle[index].positionZ += particle[index].velocityZ * timeStep;
     }
 
 }
