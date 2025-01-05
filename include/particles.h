@@ -16,17 +16,4 @@ public:
 
 void initParticles();
 
-__global__ void updateState(particles *particle , size_t size , float timeStep);
-
-
-__global__ void forceApplied(float forceX , float forceY , float forceZ , particles &particle , float &timeStep);
-
-void initParticles();
-
-void toCuda(particles *particle ,size_t size , float *timeStep);
-
-
-
-void iterator(int stepCountLimit);
-
 #endif
