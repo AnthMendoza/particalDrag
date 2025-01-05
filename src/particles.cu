@@ -4,24 +4,24 @@
 #include <stdlib.h>
 #include <iostream>
 
-__global__ void updateState(particles *particle , size_t size){
+__global__ void updateState(particles *particle , size_t size , float timeStep){
 
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if(index<size){
-        particle[index].positionX +- particle[index].velocityX * constants::timeStep;
-        particle[index].positionY +- particle[index].velocityY * constants::timeStep;
-        particle[index].positionZ +- particle[index].velocityZ * constants::timeStep;
+        particle[index].positionX +- particle[index].velocityX * timeStep;
+        particle[index].positionY +- particle[index].velocityY * timeStep;
+        particle[index].positionZ +- particle[index].velocityZ * timeStep;
     }
 
 }
 
 
-__global__ void forceApplied(float forceX , float forceY , float forceZ , particles &particle){
-    particle.velocityX += (forceX / particle.mass) * constants::timeStep;
-    particle.velocityY += (forceY / particle.mass) * constants::timeStep;
-    particle.velocityZ += (forceZ / particle.mass) * constants::timeStep;
+__global__ void forceApplied(float forceX , float forceY , float forceZ , particles &particle , float &timeStep){
+    particle.velocityX += (forceX / particle.mass) * timeStep;
+    particle.velocityY += (forceY / particle.mass) * timeStep;
+    particle.velocityZ += (forceZ / particle.mass) * timeStep;
 
 }
 
@@ -45,25 +45,25 @@ void initParticles(){
         particleData[i].mass = constants::mass; 
 
     }
-    toCuda(particleData , size);
+    toCuda(particleData , size , &constants::timeStep);
 }
 
 
-void toCuda(particles *particle ,size_t size){
+void toCuda(particles *particle ,size_t size , float *timeStep){
     particles *particlesCuda;
+    float *timeStepCuda;
+
     cudaMalloc(&particlesCuda , size);
 
     cudaMemcpy(particlesCuda , particle , size ,cudaMemcpyHostToDevice);
 
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (size + threadsPerBlock - 1) / threadsPerBlock;
-
-    updateState<<<blocksPerGrid, threadsPerBlock>>>(particlesCuda , size);
-
+    cudaMalloc(&timeStepCuda , sizeof(float));
+    
+    cudaMemcpy(timeStepCuda , timeStep, sizeof(float),cudaMemcpyHostToDevice);
 
     int threadsPerBlock = 256;
     int blocksPerGrid = (constants::particleCount + threadsPerBlock - 1) / threadsPerBlock;
-    updateState<<<blocksPerGrid, threadsPerBlock>>>(particlesCuda , size);
+    updateState<<<blocksPerGrid, threadsPerBlock>>>(particlesCuda , size ,*timeStepCuda);
 
     cudaMemcpy(particle,particlesCuda,size, cudaMemcpyDeviceToHost);
 
