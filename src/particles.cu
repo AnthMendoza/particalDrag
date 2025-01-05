@@ -33,17 +33,39 @@ void toCuda(particles *particle ,size_t size , float *timeStep , int *particleCo
     particles *particlesCuda;
     float *timeStepCuda;
 
-    cudaMalloc(&particlesCuda , size);
+    cudaError_t err = cudaMalloc(&particlesCuda , size);
+
+    if(err != cudaSuccess){
+        std::cerr << "Failed to allocate device memory (particlesCuda): " << cudaGetErrorString(err) << std::endl;
+        return;
+    }
 
     cudaMemcpy(particlesCuda , particle , size ,cudaMemcpyHostToDevice);
+
     std::cout<< timeStep <<" , "<< particleCount << " , "<< size;
-    cudaMalloc(&timeStepCuda , sizeof(float));
-    
+    err = cudaMalloc(&timeStepCuda , sizeof(float));
+
+    if(err != cudaSuccess){
+        std::cerr << "Failed to allocate device memory (timeStepCuda): " << cudaGetErrorString(err) << std::endl;
+        return;
+    }
+
     cudaMemcpy(timeStepCuda , timeStep, sizeof(float),cudaMemcpyHostToDevice);
 
     int threadsPerBlock = 256;
-    int blocksPerGrid = (constants::particleCount + threadsPerBlock - 2) / threadsPerBlock;
+    int blocksPerGrid = (constants::particleCount + threadsPerBlock - 1) / threadsPerBlock;
+    
     updateState<<<blocksPerGrid, threadsPerBlock>>>(particlesCuda , *particleCount  ,*timeStepCuda);
+
+
+    err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cerr << "Kernel launch failed: " << cudaGetErrorString(err) << std::endl;
+        cudaFree(particlesCuda);
+        return;
+    }
+
+
     cudaDeviceSynchronize();
     cudaMemcpy(particle,particlesCuda,size, cudaMemcpyDeviceToHost);
 
@@ -52,6 +74,9 @@ void toCuda(particles *particle ,size_t size , float *timeStep , int *particleCo
         std::cout<< particle[i].positionX << " , " << particle[i].positionY << " , " << particle[i].positionZ ;
 
     }
+
+    cudaFree(particlesCuda);
+    cudaFree(timeStepCuda);
 }
 
 
@@ -86,7 +111,11 @@ void initParticles(){
         particleData[i].mass = constants::mass; 
 
     }
+
+
     toCuda(particleData , size , &constants::timeStep , &constants::particleCount);
+
+    free(particleData);
 }
 
 
