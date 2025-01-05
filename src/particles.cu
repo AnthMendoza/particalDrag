@@ -26,27 +26,7 @@ __global__ void forceApplied(float forceX , float forceY , float forceZ , partic
 }
 
 
-void initParticles(){
 
-    size_t size = constants::particleCount * sizeof(particles);
-
-    particles *particleData = (particles*)malloc(size);
-
-    for(int i = 0 ; i < constants::particleCount ; i++ ){
-
-        particleData[i].positionX = constants::gridSizeX * i / constants::particleCount;
-        particleData[i].positionY = constants::gridSizeY * i / constants::particleCount;
-        particleData[i].positionZ = constants::gridSizeZ * i / constants::particleCount;
-
-        particleData[i].velocityX = 0;
-        particleData[i].velocityY = 0;
-        particleData[i].velocityZ = 0;
-        
-        particleData[i].mass = constants::mass; 
-
-    }
-    toCuda(particleData , size , &constants::timeStep);
-}
 
 
 void toCuda(particles *particle ,size_t size , float *timeStep){
@@ -86,6 +66,28 @@ void iterator(int stepCountLimit){
 
 }
 
+
+void initParticles(){
+
+    size_t size = constants::particleCount * sizeof(particles);
+
+    particles *particleData = (particles*)malloc(size);
+
+    for(int i = 0 ; i < constants::particleCount ; i++ ){
+
+        particleData[i].positionX = constants::gridSizeX * i / constants::particleCount;
+        particleData[i].positionY = constants::gridSizeY * i / constants::particleCount;
+        particleData[i].positionZ = constants::gridSizeZ * i / constants::particleCount;
+
+        particleData[i].velocityX = 0;
+        particleData[i].velocityY = 0;
+        particleData[i].velocityZ = 0;
+        
+        particleData[i].mass = constants::mass; 
+
+    }
+    toCuda(particleData , size , &constants::timeStep);
+}
 
 
 
