@@ -36,7 +36,7 @@ void toCuda(particles *particle ,size_t size , float *timeStep , int *particleCo
     cudaMalloc(&particlesCuda , size);
 
     cudaMemcpy(particlesCuda , particle , size ,cudaMemcpyHostToDevice);
-
+    std::cout<< timeStep <<" , "<< particleCount << " , "<< size;
     cudaMalloc(&timeStepCuda , sizeof(float));
     
     cudaMemcpy(timeStepCuda , timeStep, sizeof(float),cudaMemcpyHostToDevice);
