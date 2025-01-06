@@ -29,9 +29,8 @@ __global__ void forceApplied(float forceX , float forceY , float forceZ , partic
 
 
 
-void toCuda(particles *particle ,size_t size , float *timeStep , int *particleCount){
+void toCuda(particles *particle ,size_t size , float timeStep , int particleCount){
     particles *particlesCuda;
-    float *timeStepCuda;
 
     cudaError_t err = cudaMalloc(&particlesCuda , size);
 
@@ -43,19 +42,11 @@ void toCuda(particles *particle ,size_t size , float *timeStep , int *particleCo
     cudaMemcpy(particlesCuda , particle , size ,cudaMemcpyHostToDevice);
 
     std::cout<< timeStep <<" , "<< particleCount << " , "<< size;
-    err = cudaMalloc(&timeStepCuda , sizeof(float));
-
-    if(err != cudaSuccess){
-        std::cerr << "Failed to allocate device memory (timeStepCuda): " << cudaGetErrorString(err) << std::endl;
-        return;
-    }
-
-    cudaMemcpy(timeStepCuda , timeStep, sizeof(float),cudaMemcpyHostToDevice);
 
     int threadsPerBlock = 256;
     int blocksPerGrid = (constants::particleCount + threadsPerBlock - 1) / threadsPerBlock;
     
-    updateState<<<blocksPerGrid, threadsPerBlock>>>(particlesCuda , *particleCount  ,*timeStepCuda);
+    updateState<<<blocksPerGrid, threadsPerBlock>>>(particlesCuda , particleCount  ,timeStep);
 
 
     err = cudaGetLastError();
@@ -76,7 +67,6 @@ void toCuda(particles *particle ,size_t size , float *timeStep , int *particleCo
     }
 
     cudaFree(particlesCuda);
-    cudaFree(timeStepCuda);
 }
 
 
@@ -113,9 +103,10 @@ void initParticles(){
     }
 
 
-    toCuda(particleData , size , &constants::timeStep , &constants::particleCount);
+    toCuda(particleData , size , constants::timeStep , constants::particleCount);
 
     free(particleData);
+
 }
 
 
