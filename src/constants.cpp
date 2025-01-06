@@ -1,7 +1,7 @@
 
 
 namespace constants{
-    int particleCount = 10000;
+    int particleCount = 10000000;
 
     float gridSizeX = 10;
     float gridSizeY = 10;

@@ -10,9 +10,9 @@ __global__ void updateState(particles *particle , int particleCount , float time
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if(index< particleCount){
-        particle[index].positionX += particle[index].velocityX * timeStep;
-        particle[index].positionY += particle[index].velocityY * timeStep;
-        particle[index].positionZ += particle[index].velocityZ * timeStep;
+        particle[index].positionX = particle[index].positionX * timeStep;
+        particle[index].positionY = particle[index].positionY * timeStep;
+        particle[index].positionZ = particle[index].positionZ * timeStep;
     }
 
 }
@@ -60,11 +60,11 @@ void toCuda(particles *particle ,size_t size , float timeStep , int particleCoun
     cudaDeviceSynchronize();
     cudaMemcpy(particle,particlesCuda,size, cudaMemcpyDeviceToHost);
 
-    for(int i = 0 ; i < size ; i++){
+    //for(int i = 0 ; i < constants::particleCount ; i++){
 
-        std::cout<< particle[i].positionX << " , " << particle[i].positionY << " , " << particle[i].positionZ ;
+      //  std::cout<< "( "<< particle[i].positionX << " , " << particle[i].positionY << " , " << particle[i].positionZ << " )";
 
-    }
+    //}
 
     cudaFree(particlesCuda);
 }
