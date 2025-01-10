@@ -3,22 +3,57 @@
 #include <cuda_runtime.h>
 #include <stdlib.h>
 #include <iostream>
+#include <random>
+#include <cmath>
 
-__global__ void updateState(particles *particle , int particleCount , float timeStep){
 
+__device__ void updateState(particles *particle , int particleCount,  float timeStep){
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
-
     if(index< particleCount){
-        particle[index].positionX = particle[index].positionX * timeStep;
-        particle[index].positionY = particle[index].positionY * timeStep;
-        particle[index].positionZ = particle[index].positionZ * timeStep;
+        particle[index].positionX = particle[index].velocityX * timeStep;
+        particle[index].positionY = particle[index].velocityY * timeStep;
+        particle[index].positionZ = particle[index].velocityZ * timeStep;
+        
     }
+
 
 }
 
 
-__global__ void forceApplied(float forceX , float forceY , float forceZ , particles &particle , float &timeStep){
+__device__ void iterator(particles *particlesCuda , size_t size ){
+    cudaEvent_t start, stop;
+    float milliseconds = 0;
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    size_t particleCount = size/ sizeof(particles);
+
+    int threadsPerBlock = 256;
+    int blocksPerGrid = (constants::particleCount + threadsPerBlock - 1) / threadsPerBlock;
+
+    while(true){
+        cudaEventRecord(start);
+    
+        updateState<<<blocksPerGrid, threadsPerBlock>>>(particlesCuda , particleCount , milliseconds);
+
+        cudaDeviceSynchronize();
+
+        cudaEventRecord(stop);
+
+        cudaEventSynchronize(stop);
+
+        cudaEventElapsedTime(&milliseconds, start, stop);
+
+    }
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+}
+
+
+__device__ void forceApplied(float forceX , float forceY , float forceZ , particles &particle , float &timeStep){
     particle.velocityX += (forceX / particle.mass) * timeStep;
     particle.velocityY += (forceY / particle.mass) * timeStep;
     particle.velocityZ += (forceZ / particle.mass) * timeStep;
@@ -27,9 +62,66 @@ __global__ void forceApplied(float forceX , float forceY , float forceZ , partic
 
 
 
+__device__ void containerBounds(particles &particle , float containerX , float containerY , float containerZ){
+
+    if(particle.positionX > containerX ){
+        particle.velocityX = -particle.velocityX;
+        particle.positionX = containerX;
+    }
+    if(particle.positionX < 0 ){
+        particle.velocityX = -particle.velocityX;
+        particle.positionX = 0;
+    }
+
+    if(particle.positionY > containerY ){
+        particle.velocityY = -particle.velocityY;
+        particle.positionY = containerY;
+    }
+    if(particle.positionY < 0 ){
+        particle.velocityY = -particle.velocityY;
+        particle.positionY = 0;
+    }
+
+    if(particle.positionZ > containerZ ){
+        particle.velocityZ = -particle.velocityZ;
+        particle.positionZ = containerZ;
+    }
+    if(particle.positionZ < 0 ){
+        particle.velocityZ = -particle.velocityZ;
+        particle.positionZ = 0;
+    }
+
+}
 
 
-void toCuda(particles *particle ,size_t size , float timeStep , int particleCount){
+
+__device__ float kernelFunction(particles &mainParticle , particles &interactionParticle , float radius , float smoothingLength){
+    float distanceFactor = radius/smoothingLength;
+
+    if(distanceFactor > 2) return 0;
+    if( distanceFactor <= 1) return (1 /(3.1415926 * std::powf(smoothingLength,3)))*(1 - 3/2 * std::powf((distanceFactor),2) + 3/4 * std::powf((distanceFactor),3));
+
+    if(distanceFactor <= 2) return (1 /(3.1415926 * std::powf(smoothingLength,3)))*(1/4) * std::powf((2-(distanceFactor)),3);
+
+
+}
+
+
+
+void printParticles(particles *particle){
+    for( int i = 0; i < constants::particleCount ; i++){
+        std::cout<< i << " : ( " << particle[i].positionX << " , " << particle[i].positionY << " , " << particle[i].positionZ << " ) \n";
+    }
+}
+
+
+void partition(){
+    
+}
+
+
+
+void toCuda(particles *particle ,size_t size , int particleCount){
     particles *particlesCuda;
 
     cudaError_t err = cudaMalloc(&particlesCuda , size);
@@ -41,12 +133,7 @@ void toCuda(particles *particle ,size_t size , float timeStep , int particleCoun
 
     cudaMemcpy(particlesCuda , particle , size ,cudaMemcpyHostToDevice);
 
-    std::cout<< timeStep <<" , "<< particleCount << " , "<< size;
-
-    int threadsPerBlock = 256;
-    int blocksPerGrid = (constants::particleCount + threadsPerBlock - 1) / threadsPerBlock;
-    
-    updateState<<<blocksPerGrid, threadsPerBlock>>>(particlesCuda , particleCount  ,timeStep);
+    iterator(particlesCuda , size);
 
 
     err = cudaGetLastError();
@@ -60,26 +147,18 @@ void toCuda(particles *particle ,size_t size , float timeStep , int particleCoun
     cudaDeviceSynchronize();
     cudaMemcpy(particle,particlesCuda,size, cudaMemcpyDeviceToHost);
 
-    //for(int i = 0 ; i < constants::particleCount ; i++){
-
-      //  std::cout<< "( "<< particle[i].positionX << " , " << particle[i].positionY << " , " << particle[i].positionZ << " )";
-
-    //}
-
     cudaFree(particlesCuda);
 }
 
 
 
-void iterator(int stepCountLimit){
-
-    for(int i = 0 ; i < stepCountLimit ; i++){
-
-
-
-    }
-
+float getRandomFloat(float min, float max) {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dis(min, max);
+    return dis(gen);
 }
+
 
 
 void initParticles(){
@@ -90,11 +169,11 @@ void initParticles(){
 
     for(int i = 0 ; i < constants::particleCount ; i++ ){
 
-        particleData[i].positionX = constants::gridSizeX * i / constants::particleCount;
-        particleData[i].positionY = constants::gridSizeY * i / constants::particleCount;
-        particleData[i].positionZ = constants::gridSizeZ * i / constants::particleCount;
+        particleData[i].positionX = getRandomFloat(0.0f , constants::gridSizeX);
+        particleData[i].positionY = getRandomFloat(0.0f , constants::gridSizeY);
+        particleData[i].positionZ = getRandomFloat(0.0f , constants::gridSizeZ);
 
-        particleData[i].velocityX = 0;
+        particleData[i].velocityX = .5;
         particleData[i].velocityY = 0;
         particleData[i].velocityZ = 0;
         
@@ -103,7 +182,7 @@ void initParticles(){
     }
 
 
-    toCuda(particleData , size , constants::timeStep , constants::particleCount);
+    toCuda(particleData , size, constants::particleCount);
 
     free(particleData);
 

@@ -8,6 +8,9 @@ namespace constants{
     float gridSizeZ = 10;
 
     float mass  = .01;
-    float timeStep = .01;
+
+    float containerX = 10;
+    float containerY = 10;
+    float containerZ = 10;
 
 }

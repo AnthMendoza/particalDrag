@@ -7,7 +7,6 @@ namespace constants{
     extern float gridSizeY;
     extern float gridSizeZ;
     extern float mass;
-    extern float timeStep;
 }
 
 #endif
