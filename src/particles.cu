@@ -21,7 +21,7 @@ __global__ void updateState(particles *particle , int particleCount,  float time
 }
 
 
-__global__ void iterator(particles *particlesCuda , size_t size , int particleCount){
+void iterator(particles *particlesCuda , size_t size , int particleCount){
     cudaEvent_t start, stop;
     float milliseconds = 0;
 
