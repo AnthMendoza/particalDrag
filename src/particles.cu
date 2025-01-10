@@ -7,7 +7,7 @@
 #include <cmath>
 
 
-__device__ void updateState(particles *particle , int particleCount,  float timeStep){
+__global__ void updateState(particles *particle , int particleCount,  float timeStep){
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index< particleCount){
@@ -53,7 +53,7 @@ __global__ void iterator(particles *particlesCuda , size_t size , int particleCo
 }
 
 
-__device__ void forceApplied(float forceX , float forceY , float forceZ , particles &particle , float &timeStep){
+__global__ void forceApplied(float forceX , float forceY , float forceZ , particles &particle , float &timeStep){
     particle.velocityX += (forceX / particle.mass) * timeStep;
     particle.velocityY += (forceY / particle.mass) * timeStep;
     particle.velocityZ += (forceZ / particle.mass) * timeStep;
@@ -62,7 +62,7 @@ __device__ void forceApplied(float forceX , float forceY , float forceZ , partic
 
 
 
-__device__ void containerBounds(particles &particle , float containerX , float containerY , float containerZ){
+__global__ void containerBounds(particles &particle , float containerX , float containerY , float containerZ){
 
     if(particle.positionX > containerX ){
         particle.velocityX = -particle.velocityX;
@@ -95,7 +95,7 @@ __device__ void containerBounds(particles &particle , float containerX , float c
 
 
 
-__device__ float kernelFunction(particles &mainParticle , particles &interactionParticle , float radius , float smoothingLength){
+__global__ float kernelFunction(particles &mainParticle , particles &interactionParticle , float radius , float smoothingLength){
     float distanceFactor = radius/smoothingLength;
 
 
