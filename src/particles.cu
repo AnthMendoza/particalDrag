@@ -98,11 +98,12 @@ __device__ void containerBounds(particles &particle , float containerX , float c
 __device__ float kernelFunction(particles &mainParticle , particles &interactionParticle , float radius , float smoothingLength){
     float distanceFactor = radius/smoothingLength;
 
-    if(distanceFactor > 2) return 0;
+
     if( distanceFactor <= 1) return (1 /(3.1415926 * smoothingLength * smoothingLength * smoothingLength))*(1 - 3/2 * powf((distanceFactor),2) + 3/4 * powf((distanceFactor),3));
 
     if(distanceFactor <= 2) return (1 /(3.1415926 * smoothingLength * smoothingLength * smoothingLength))*(1/4) * powf((2-(distanceFactor)),3);
 
+    return 0;
 
 }
 
