@@ -99,9 +99,9 @@ __device__ float kernelFunction(particles &mainParticle , particles &interaction
     float distanceFactor = radius/smoothingLength;
 
     if(distanceFactor > 2) return 0;
-    if( distanceFactor <= 1) return (1 /(3.1415926 * std::powf(smoothingLength,3)))*(1 - 3/2 * std::powf((distanceFactor),2) + 3/4 * std::powf((distanceFactor),3));
+    if( distanceFactor <= 1) return (1 /(3.1415926 * smoothingLength * smoothingLength * smoothingLength))*(1 - 3/2 * powf((distanceFactor),2) + 3/4 * powf((distanceFactor),3));
 
-    if(distanceFactor <= 2) return (1 /(3.1415926 * std::powf(smoothingLength,3)))*(1/4) * std::powf((2-(distanceFactor)),3);
+    if(distanceFactor <= 2) return (1 /(3.1415926 * smoothingLength * smoothingLength * smoothingLength))*(1/4) * powf((2-(distanceFactor)),3);
 
 
 }
