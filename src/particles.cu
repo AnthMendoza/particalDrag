@@ -101,16 +101,15 @@ __global__ void kernelFunction(particles &mainParticle , particles &interactionP
 
     if( distanceFactor <= 1){ 
         *kernelValue = (1 /(3.1415926f * smoothingLength * smoothingLength * smoothingLength))*(1 - 3/2 * powf((distanceFactor),2) + 3/4 * powf((distanceFactor),3));
-        return;
     }
 
     if(distanceFactor <= 2){
         
     *kernelValue = (1 /(3.1415926 * smoothingLength * smoothingLength * smoothingLength))*(1/4) * powf((2-(distanceFactor)),3);
-    return 0.0;
     } 
-
-    *kernelValue = 0.0f
+    if(distanceFactor > 2){
+        *kernelValue = 0.0f;
+    }
 
 }
 
