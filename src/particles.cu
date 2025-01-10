@@ -21,17 +21,17 @@ __device__ void updateState(particles *particle , int particleCount,  float time
 }
 
 
-__device__ void iterator(particles *particlesCuda , size_t size ){
+__global__ void iterator(particles *particlesCuda , size_t size , int particleCount){
     cudaEvent_t start, stop;
     float milliseconds = 0;
 
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
-    size_t particleCount = size/ sizeof(particles);
+    
 
     int threadsPerBlock = 256;
-    int blocksPerGrid = (constants::particleCount + threadsPerBlock - 1) / threadsPerBlock;
+    int blocksPerGrid = (particleCount + threadsPerBlock - 1) / threadsPerBlock;
 
     while(true){
         cudaEventRecord(start);
@@ -134,7 +134,7 @@ void toCuda(particles *particle ,size_t size , int particleCount){
 
     cudaMemcpy(particlesCuda , particle , size ,cudaMemcpyHostToDevice);
 
-    iterator(particlesCuda , size);
+    iterator(particlesCuda , size , constants::particleCount);
 
 
     err = cudaGetLastError();
