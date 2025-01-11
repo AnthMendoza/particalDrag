@@ -1,10 +1,12 @@
 #include "../include/particles.h"
 #include "../include/constants.h"
+#include "renderer.h"
 #include <cuda_runtime.h>
 #include <stdlib.h>
 #include <iostream>
 #include <random>
 #include <cmath>
+
 
 
 __global__ void updateState(particles *particle , int particleCount,  float timeStep){
@@ -16,7 +18,6 @@ __global__ void updateState(particles *particle , int particleCount,  float time
         particle[index].positionZ = particle[index].velocityZ * timeStep;
         
     }
-
 
 }
 
@@ -45,7 +46,7 @@ void iterator(particles *particlesCuda , size_t size , int particleCount){
         cudaEventSynchronize(stop);
 
         cudaEventElapsedTime(&milliseconds, start, stop);
-
+    
     }
 
     cudaEventDestroy(start);
